@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Quiz</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .question {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            padding: 15px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+            text-align: left;
+            width: 100%;
+            outline: none;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        .option-btn.selected {
+            border-color: #3498db;
+            background: #ebf5fb;
+        }
+
+        .option-btn.correct {
+            background: #d4edda !important;
+            border-color: #2ecc71 !important;
+            color: #155724;
+        }
+
+        .option-btn.wrong {
+            background: #f8d7da !important;
+            border-color: #e74c3c !important;
+            color: #721c24;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+        }
+
+        .feedback {
+            font-size: 18px;
+            font-weight: bold;
+            height: 25px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #3498db;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+            min-width: 110px;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: #2980b9;
+        }
+
+        .nav-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        #result-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .score-text {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .details-text {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .final-msg {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .quiz-container {
+                padding: 20px;
+            }
+
+            .question {
+                font-size: 18px;
+            }
+
+            .option-btn {
+                font-size: 14px;
+                padding: 12px;
+            }
+
+            .nav-btn {
+                min-width: 90px;
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="quiz-container">
+        <div id="quiz-screen">
+            <div class="progress" id="progress"></div>
+            <div class="question" id="question-text"></div>
+            <div class="options" id="options"></div>
+            <div class="feedback" id="feedback"></div>
+            <div class="nav-buttons">
+                <button class="nav-btn" id="prev-btn" onclick="prevQuestion()">Previous</button>
+                <button class="nav-btn" id="next-btn" onclick="nextQuestion()">Next</button>
+            </div>
+        </div>
+
+        <div id="result-screen">
+            <h2>Quiz Completed!</h2>
+            <div class="score-text" id="score-text"></div>
+            <div class="details-text" id="details-text"></div>
+            <div class="final-msg" id="final-msg"></div>
+            <button class="nav-btn" onclick="initQuiz()" style="margin-top: 15px;">Restart Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        const originalQuestions =
+            [
+                {
+                    "id": "1",
+                    "question": "1. Consumer behaviour primarily helps marketers understand how buyers _________ among the competing brands.",
+                    "options": [
+                        "a. manufacture products",
+                        "b. feel, think, and choose",
+                        "c. evaluate competitors",
+                        "d. set market prices"
+                    ],
+                    "answer": "b. feel, think, and choose"
+                },
+                {
+                    "id": "2",
+                    "question": "2. Which among the following is NOT considered an environmental influence on consumer decision-making?",
+                    "options": [
+                        "a. Culture",
+                        "b. Family",
+                        "c. Subculture",
+                        "d. Personal investments"
+                    ],
+                    "answer": "d. Personal investments"
+                },
+                {
+                    "id": "3",
+                    "question": "3. The stage in which a consumer seeks information from memory or external sources is called __________.",
+                    "options": [
+                        "a. Need recognition",
+                        "b. Information search",
+                        "c. Purchase decision",
+                        "d. Post-purchase evaluation"
+                    ],
+                    "answer": "b. Information search"
+                },
+                {
+                    "id": "4",
+                    "question": "4. Consumers who prefer premium brands but actively look for discounts and value deals are best described as:",
+                    "options": [
+                        "a. Socialites",
+                        "b. Value-conscious buyers",
+                        "c. Innovators",
+                        "d. Laggards"
+                    ],
+                    "answer": "b. Value-conscious buyers"
+                },
+                {
+                    "id": "5",
+                    "question": "5. Webrooming refers to a buying practice where consumers:",
+                    "options": [
+                        "a. Inspect products online but purchase offline",
+                        "b. Inspect products offline but purchase online",
+                        "c. Buy only through mobile apps",
+                        "d. Avoid all online information"
+                    ],
+                    "answer": "a. Inspect products online but purchase offline"
+                },
+                {
+                    "id": "6",
+                    "question": "6. A shift from joint family structures to nuclear families indicates movement from:",
+                    "options": [
+                        "a. Individualism to collectivism",
+                        "b. Collectivism to individualism",
+                        "c. Standardisation to customisation",
+                        "d. Profit orientation to value orientation"
+                    ],
+                    "answer": "b. Collectivism to individualism"
+                },
+                {
+                    "id": "7",
+                    "question": "7. Which consumer group is most likely to demand time-saving household products due to lifestyle constraints?",
+                    "options": [
+                        "a. Elderly consumers",
+                        "b. Working women",
+                        "c. Teenagers",
+                        "d. Retired professionals"
+                    ],
+                    "answer": "b. Working women"
+                },
+                {
+                    "id": "8",
+                    "question": "8. Technological advancement has increased the importance of __________ in influencing purchase decisions.",
+                    "options": [
+                        "a. Traditional billboards",
+                        "b. Electronic word-of-mouth",
+                        "c. Paper catalogues",
+                        "d. In-store sampling only"
+                    ],
+                    "answer": "b. Electronic word-of-mouth"
+                },
+                {
+                    "id": "9",
+                    "question": "9. Under the Consumer Protection Act, a claim exceeding \u20b91 crore must be filed with the:",
+                    "options": [
+                        "a. State Commission",
+                        "b. District Forum",
+                        "c. National Commission",
+                        "d. Consumer Mediation Cell"
+                    ],
+                    "answer": "c. National Commission"
+                },
+                {
+                    "id": "10",
+                    "question": "10. When consumers continue to question their purchase choice after buying a product, they experience:",
+                    "options": [
+                        "a. High involvement learning",
+                        "b. Cognitive dissonance",
+                        "c. Selective retention",
+                        "d. Demand contraction"
+                    ],
+                    "answer": "b. Cognitive dissonance"
+                },
+                {
+                    "id": "11",
+                    "question": "11. Which among the following correctly represents the five levels of Maslow\u2019s hierarchy?",
+                    "options": [
+                        "a. Subsistence, Protection, Affection, Esteem, Creation",
+                        "b. Physiological, Safety, Social, Esteem, Self-actualisation",
+                        "c. Biological, Cognitive, Social, Identity, Freedom",
+                        "d. Safety, Esteem, Nurturance, Autonomy, Growth"
+                    ],
+                    "answer": "b. Physiological, Safety, Social, Esteem, Self-actualisation"
+                },
+                {
+                    "id": "12",
+                    "question": "12. Max-Neef\u2019s \u201cSubsistence\u201d need category primarily focuses on:",
+                    "options": [
+                        "a. Luxury consumption and status reinforcement",
+                        "b. Food, shelter, and physical well-being",
+                        "c. Freedom of expression and autonomy",
+                        "d. Skill development and creativity"
+                    ],
+                    "answer": "b. Food, shelter, and physical well-being"
+                },
+                {
+                    "id": "13",
+                    "question": "13. The need for Achievement, Exhibition, and Recognition falls under which cluster of Murray\u2019s psychogenic needs?",
+                    "options": [
+                        "a. Power needs",
+                        "b. Information needs",
+                        "c. Affection needs",
+                        "d. Ambition needs"
+                    ],
+                    "answer": "d. Ambition needs"
+                },
+                {
+                    "id": "14",
+                    "question": "14. According to Dichter\u2019s Consumption Motives, the desire to impress others or attract attention relates to:",
+                    "options": [
+                        "a. Cognizance",
+                        "b. Exhibition",
+                        "c. Autonomy",
+                        "d. Nurturance"
+                    ],
+                    "answer": "b. Exhibition"
+                },
+                {
+                    "id": "15",
+                    "question": "15. High-involvement purchases characterised mainly by rational evaluation (e.g., buying a house) fall under which FCB Grid quadrant?",
+                    "options": [
+                        "a. Low involvement \u2013 Feel",
+                        "b. High involvement \u2013 Feel",
+                        "c. High involvement \u2013 Think",
+                        "d. Low involvement \u2013 Think"
+                    ],
+                    "answer": "c. High involvement \u2013 Think"
+                },
+                {
+                    "id": "16",
+                    "question": "16. In the FCB Grid, products purchased out of habit (e.g., biscuits, detergents) typically follow which sequence?",
+                    "options": [
+                        "a. Learn \u2192 Feel \u2192 Do",
+                        "b. Feel \u2192 Learn \u2192 Do",
+                        "c. Do \u2192 Learn \u2192 Feel",
+                        "d. Feel \u2192 Do \u2192 Learn"
+                    ],
+                    "answer": "c. Do \u2192 Learn \u2192 Feel"
+                },
+                {
+                    "id": "17",
+                    "question": "17. In Consumer Involvement, products involving low risk but strong emotional appeal (e.g., chocolates, greeting cards) are classified as:",
+                    "options": [
+                        "a. High involvement \u2013 Rational",
+                        "b. Low involvement \u2013 Emotional",
+                        "c. Low involvement \u2013 Rational",
+                        "d. High involvement \u2013 Emotional"
+                    ],
+                    "answer": "b. Low involvement \u2013 Emotional"
+                },
+                {
+                    "id": "18",
+                    "question": "18. Perception is best described as a process of:",
+                    "options": [
+                        "a. Storing information without interpretation",
+                        "b. Selecting, organising, and interpreting sensory inputs",
+                        "c. Responding automatically to stimuli",
+                        "d. Remembering messages exactly as delivered"
+                    ],
+                    "answer": "b. Selecting, organising, and interpreting sensory inputs"
+                },
+                {
+                    "id": "19",
+                    "question": "19. The minimum level of a stimulus required for a consumer to consciously notice it is known as:",
+                    "options": [
+                        "a. Differential threshold",
+                        "b. Sensory saturation",
+                        "c. Absolute threshold",
+                        "d. Perceptual adaptation"
+                    ],
+                    "answer": "c. Absolute threshold"
+                },
+                {
+                    "id": "20",
+                    "question": "20. When two attractive alternatives both appeal to a consumer (e.g., choosing between two similarly priced paint brands), the individual experiences:",
+                    "options": [
+                        "a. Approach\u2013avoidance conflict",
+                        "b. Avoidance\u2013avoidance conflict",
+                        "c. Cognitive depletion",
+                        "d. Approach\u2013approach conflict"
+                    ],
+                    "answer": "d. Approach\u2013approach conflict"
+                },
+                {
+                    "id": "21",
+                    "question": "21. Personality is best described as:",
+                    "options": [
+                        "a. A temporary emotional state",
+                        "b. A dynamic organisation of traits influencing behaviour",
+                        "c. A behaviour learned only in adulthood",
+                        "d. A set of unrelated social habits"
+                    ],
+                    "answer": "b. A dynamic organisation of traits influencing behaviour"
+                },
+                {
+                    "id": "22",
+                    "question": "22. Which characteristic of personality reflects the fact that no two individuals behave the same way?",
+                    "options": [
+                        "a. Stability",
+                        "b. Social conformity",
+                        "c. Individual differences",
+                        "d. Emotional neutrality"
+                    ],
+                    "answer": "c. Individual differences"
+                },
+                {
+                    "id": "23",
+                    "question": "23. The Single-Trait Theory focuses on:",
+                    "options": [
+                        "a. All internal traits at once",
+                        "b. Only one personality trait is relevant to a specific behaviour",
+                        "c. Emotional traits unrelated to consumption",
+                        "d. Traits that change rapidly over time"
+                    ],
+                    "answer": "b. Only one personality trait is relevant to a specific behaviour"
+                },
+                {
+                    "id": "24",
+                    "question": "24. Consumers who strongly prefer domestic products exhibit:",
+                    "options": [
+                        "a. Materialism",
+                        "b. Need for uniqueness",
+                        "c. Ethnocentrism",
+                        "d. Social character"
+                    ],
+                    "answer": "c. Ethnocentrism"
+                },
+                {
+                    "id": "25",
+                    "question": "25. According to Freudian Theory, the instinctive part is:",
+                    "options": [
+                        "a. Ego",
+                        "b. Id",
+                        "c. Superego",
+                        "d. Conscious self"
+                    ],
+                    "answer": "b. Id"
+                },
+                {
+                    "id": "26",
+                    "question": "26. Reality-oriented behaviour is governed by:",
+                    "options": [
+                        "a. Id",
+                        "b. Ego",
+                        "c. Superego",
+                        "d. Instinctual mind"
+                    ],
+                    "answer": "b. Ego"
+                },
+                {
+                    "id": "27",
+                    "question": "27. Aggressive consumers (Horney) tend to:",
+                    "options": [
+                        "a. Conform",
+                        "b. Desire admiration and superiority",
+                        "c. Detach",
+                        "d. Avoid brands"
+                    ],
+                    "answer": "b. Desire admiration and superiority"
+                },
+                {
+                    "id": "28",
+                    "question": "28. Structured planners belong to:",
+                    "options": [
+                        "a. Perceiving",
+                        "b. Judging",
+                        "c. Sensing",
+                        "d. Feeling"
+                    ],
+                    "answer": "b. Judging"
+                },
+                {
+                    "id": "29",
+                    "question": "29. Brand Personality refers to:",
+                    "options": [
+                        "a. Technical features",
+                        "b. Human-like traits",
+                        "c. Satisfaction",
+                        "d. Manufacturing"
+                    ],
+                    "answer": "b. Human-like traits"
+                },
+                {
+                    "id": "30",
+                    "question": "30. Meaning Transfer Model flow:",
+                    "options": [
+                        "a. Product \u2192 Consumer \u2192 Celebrity",
+                        "b. Brand \u2192 Consumer \u2192 Celebrity",
+                        "c. Celebrity \u2192 Product/Brand \u2192 Consumer",
+                        "d. Market \u2192 Brand \u2192 Celebrity"
+                    ],
+                    "answer": "c. Celebrity \u2192 Product/Brand \u2192 Consumer"
+                },
+                {
+                    "id": "31",
+                    "question": "31. In the Attitude-Towards-Object (ATO) model, a consumer\u2019s attitude is determined by:",
+                    "options": [
+                        "a. The difference between ideal and actual product performance",
+                        "b. The weighted sum of beliefs across salient attributes",
+                        "c. The sum of brand loyalty and satisfaction",
+                        "d. The importance of subjective norms alone"
+                    ],
+                    "answer": "b. The weighted sum of beliefs across salient attributes"
+                },
+                {
+                    "id": "32",
+                    "question": "32. The Ideal Point Multi-Attribute Model evaluates a product based on:",
+                    "options": [
+                        "a. How closely the brand matches the consumer\u2019s ideal attribute levels",
+                        "b. The number of features a product has",
+                        "c. The price-to-performance ratio",
+                        "d. The brand\u2019s advertising strength"
+                    ],
+                    "answer": "a. How closely the brand matches the consumer\u2019s ideal attribute levels"
+                },
+                {
+                    "id": "33",
+                    "question": "33. Which statement correctly distinguishes the TRA (Theory of Reasoned Action) from ATO?",
+                    "options": [
+                        "a. TRA ignores subjective norms completely",
+                        "b. TRA includes both attitudes and social influences in predicting behaviour",
+                        "c. ATO is more accurate than TRA",
+                        "d. TRA focuses only on product features"
+                    ],
+                    "answer": "b. TRA includes both attitudes and social influences in predicting behaviour"
+                },
+                {
+                    "id": "34",
+                    "question": "34. In TRA, subjective norms are formed by:",
+                    "options": [
+                        "a. Product specifications and pricing",
+                        "b. Core values and cultural beliefs",
+                        "c. Normative beliefs and motivation to comply",
+                        "d. Personality traits and brand experience"
+                    ],
+                    "answer": "c. Normative beliefs and motivation to comply"
+                },
+                {
+                    "id": "35",
+                    "question": "35. According to the Elaboration Likelihood Model (ELM), the central route of persuasion is most effective when:",
+                    "options": [
+                        "a. Product is inexpensive",
+                        "b. Emotional cues dominate",
+                        "c. Consumers are highly involved and motivated",
+                        "d. Celebrity ads only"
+                    ],
+                    "answer": "c. Consumers are highly involved and motivated"
+                },
+                {
+                    "id": "36",
+                    "question": "36. A marketer introducing a new unique feature is attempting to change attitudes by:",
+                    "options": [
+                        "a. Adding a new attribute",
+                        "b. Reducing attribute weights",
+                        "c. Changing norms",
+                        "d. Using dissonance"
+                    ],
+                    "answer": "a. Adding a new attribute"
+                },
+                {
+                    "id": "37",
+                    "question": "37. Changing attribute importance is a strategy for:",
+                    "options": [
+                        "a. Satisfaction",
+                        "b. Altering attribute importance",
+                        "c. Reducing associations",
+                        "d. Group conformity"
+                    ],
+                    "answer": "b. Altering attribute importance"
+                },
+                {
+                    "id": "38",
+                    "question": "38. Emotional ads influence:",
+                    "options": [
+                        "a. Cognitive attitudes",
+                        "b. Value-expressive attitudes",
+                        "c. Behavioural attitudes",
+                        "d. Utilitarian attitudes"
+                    ],
+                    "answer": "b. Value-expressive attitudes"
+                },
+                {
+                    "id": "39",
+                    "question": "39. Yale Attitude Change depends on:",
+                    "options": [
+                        "a. Source",
+                        "b. Message",
+                        "c. Audience",
+                        "d. All of the above"
+                    ],
+                    "answer": "d. All of the above"
+                },
+                {
+                    "id": "40",
+                    "question": "40. AKBP model sequence is:",
+                    "options": [
+                        "a. Attitude \u2192 Knowledge \u2192 Behaviour \u2192 Practice",
+                        "b. Awareness \u2192 Knowledge \u2192 Behaviour \u2192 Practice",
+                        "c. Attention \u2192 Kinship \u2192 Belief \u2192 Participation",
+                        "d. Awareness \u2192 Behaviour \u2192 Knowledge \u2192 Practice"
+                    ],
+                    "answer": "b. Awareness \u2192 Knowledge \u2192 Behaviour \u2192 Practice"
+                },
+                {
+                    "id": "41",
+                    "question": "41. VALS 1 classified consumers based on:",
+                    "options": [
+                        "a. Income",
+                        "b. Social values and lifestyle",
+                        "c. Personality",
+                        "d. Demographics"
+                    ],
+                    "answer": "b. Social values and lifestyle"
+                },
+                {
+                    "id": "42",
+                    "question": "42. Survivor segment is:",
+                    "options": [
+                        "a. High income",
+                        "b. Trendy",
+                        "c. Very low income, basic needs",
+                        "d. Leaders"
+                    ],
+                    "answer": "c. Very low income, basic needs"
+                },
+                {
+                    "id": "43",
+                    "question": "43. Middle-class family-oriented consumers are:",
+                    "options": [
+                        "a. Achievers",
+                        "b. Belongers",
+                        "c. Experientials",
+                        "d. I-Am-Me"
+                    ],
+                    "answer": "b. Belongers"
+                },
+                {
+                    "id": "44",
+                    "question": "44. VALS dimensions are:",
+                    "options": [
+                        "a. Personality + age",
+                        "b. Culture + motivation",
+                        "c. Primary motivation + resources",
+                        "d. Lifestyle + demographics"
+                    ],
+                    "answer": "c. Primary motivation + resources"
+                },
+                {
+                    "id": "45",
+                    "question": "45. Innovators are:",
+                    "options": [
+                        "a. Thinkers",
+                        "b. Experiencers",
+                        "c. Successful & sophisticated",
+                        "d. Makers"
+                    ],
+                    "answer": "c. Successful & sophisticated"
+                },
+                {
+                    "id": "46",
+                    "question": "46. Achievers prefer:",
+                    "options": [
+                        "a. Adventure",
+                        "b. Prestige products",
+                        "c. Low-cost",
+                        "d. Spiritual"
+                    ],
+                    "answer": "b. Prestige products"
+                },
+                {
+                    "id": "47",
+                    "question": "47. Limited money but self-expression:",
+                    "options": [
+                        "a. Experiencers",
+                        "b. Makers",
+                        "c. Strivers",
+                        "d. Conscious"
+                    ],
+                    "answer": "b. Makers"
+                },
+                {
+                    "id": "48",
+                    "question": "48. Festival ads reflect:",
+                    "options": [
+                        "a. Product design",
+                        "b. Cultural meaning transfer",
+                        "c. Channel planning",
+                        "d. Repositioning"
+                    ],
+                    "answer": "b. Cultural meaning transfer"
+                },
+                {
+                    "id": "49",
+                    "question": "49. Sustainers prefer:",
+                    "options": [
+                        "a. Luxury",
+                        "b. High-tech",
+                        "c. Low-priced packs",
+                        "d. Designer brands"
+                    ],
+                    "answer": "c. Low-priced packs"
+                },
+                {
+                    "id": "50",
+                    "question": "50. Festival gifting rituals are:",
+                    "options": [
+                        "a. Grooming",
+                        "b. Divestment",
+                        "c. Exchange",
+                        "d. Acquisition"
+                    ],
+                    "answer": "c. Exchange"
+                },
+                {
+                    "id": "51",
+                    "question": "51. Celebrity defined as:",
+                    "options": [
+                        "a. Product expert",
+                        "b. Known outside product field",
+                        "c. Social media star",
+                        "d. Brand owner"
+                    ],
+                    "answer": "b. Known outside product field"
+                },
+                {
+                    "id": "52",
+                    "question": "52. Rational evaluation of celebrity depends on:",
+                    "options": [
+                        "a. Attractiveness",
+                        "b. Knowledge & style",
+                        "c. Salary",
+                        "d. Ad count"
+                    ],
+                    "answer": "b. Knowledge & style"
+                },
+                {
+                    "id": "53",
+                    "question": "53. Vampire effect is:",
+                    "options": [
+                        "a. Decline",
+                        "b. Celebrity overshadows brand",
+                        "c. Multiple ads",
+                        "d. Competing brands"
+                    ],
+                    "answer": "b. Celebrity overshadows brand"
+                },
+                {
+                    "id": "54",
+                    "question": "54. Multi-brand endorsement issue:",
+                    "options": [
+                        "a. Availability",
+                        "b. Confusion",
+                        "c. Pricing",
+                        "d. Youth appeal"
+                    ],
+                    "answer": "b. Confusion"
+                },
+                {
+                    "id": "55",
+                    "question": "55. Living with wife\u2019s parents is:",
+                    "options": [
+                        "a. Patrilocal",
+                        "b. Matrilocal",
+                        "c. Changing",
+                        "d. Consanguine"
+                    ],
+                    "answer": "b. Matrilocal"
+                },
+                {
+                    "id": "56",
+                    "question": "56. High spending on children stage:",
+                    "options": [
+                        "a. Bachelor",
+                        "b. Newly married",
+                        "c. Full Nest II",
+                        "d. Empty Nest"
+                    ],
+                    "answer": "c. Full Nest II"
+                },
+                {
+                    "id": "57",
+                    "question": "57. Joint decisions increase with:",
+                    "options": [
+                        "a. Low risk",
+                        "b. High risk",
+                        "c. Time pressure",
+                        "d. Low importance"
+                    ],
+                    "answer": "b. High risk"
+                },
+                {
+                    "id": "58",
+                    "question": "58. Exchange favours is:",
+                    "options": [
+                        "a. Persuasion",
+                        "b. Bargaining",
+                        "c. Politicking",
+                        "d. Rational"
+                    ],
+                    "answer": "b. Bargaining"
+                },
+                {
+                    "id": "59",
+                    "question": "59. First buyers of innovation:",
+                    "options": [
+                        "a. Early majority",
+                        "b. Laggards",
+                        "c. Innovators",
+                        "d. Late adopters"
+                    ],
+                    "answer": "c. Innovators"
+                },
+                {
+                    "id": "60",
+                    "question": "60. Typewriter \u2192 computer is:",
+                    "options": [
+                        "a. Continuous",
+                        "b. Dynamic",
+                        "c. Discontinuous",
+                        "d. Horizontal"
+                    ],
+                    "answer": "c. Discontinuous"
+                },
+                {
+                    "id": "61",
+                    "question": "61. Adoption process is:",
+                    "options": [
+                        "a. Habit",
+                        "b. Uncertainty reduction",
+                        "c. Loyalty",
+                        "d. Pricing"
+                    ],
+                    "answer": "b. Uncertainty reduction"
+                },
+                {
+                    "id": "62",
+                    "question": "62. Influences early majority:",
+                    "options": [
+                        "a. Innovators",
+                        "b. Early adopters",
+                        "c. Late majority",
+                        "d. Laggards"
+                    ],
+                    "answer": "b. Early adopters"
+                },
+                {
+                    "id": "63",
+                    "question": "63. Time-saving innovation shows:",
+                    "options": [
+                        "a. Compatibility",
+                        "b. Observability",
+                        "c. Relative advantage",
+                        "d. Trialability"
+                    ],
+                    "answer": "c. Relative advantage"
+                },
+                {
+                    "id": "64",
+                    "question": "64. Compatibility means:",
+                    "options": [
+                        "a. Income",
+                        "b. Lifestyle & values",
+                        "c. Brand",
+                        "d. Promotion"
+                    ],
+                    "answer": "b. Lifestyle & values"
+                },
+                {
+                    "id": "65",
+                    "question": "65. Complex products adopt slowly because:",
+                    "options": [
+                        "a. Cost",
+                        "b. Difficult to use",
+                        "c. Promotion",
+                        "d. Availability"
+                    ],
+                    "answer": "b. Difficult to use"
+                },
+                {
+                    "id": "66",
+                    "question": "66. Small packs improve:",
+                    "options": [
+                        "a. Observability",
+                        "b. Compatibility",
+                        "c. Trialability",
+                        "d. Advantage"
+                    ],
+                    "answer": "c. Trialability"
+                },
+                {
+                    "id": "67",
+                    "question": "67. Influencers are:",
+                    "options": [
+                        "a. Innovators",
+                        "b. Opinion leaders",
+                        "c. Followers",
+                        "d. Majority"
+                    ],
+                    "answer": "b. Opinion leaders"
+                },
+                {
+                    "id": "68",
+                    "question": "68. Opinion leadership is:",
+                    "options": [
+                        "a. Same everywhere",
+                        "b. Celebrities only",
+                        "c. Product-specific",
+                        "d. Controlled"
+                    ],
+                    "answer": "c. Product-specific"
+                },
+                {
+                    "id": "69",
+                    "question": "69. Broad knowledge consumers are:",
+                    "options": [
+                        "a. Innovators",
+                        "b. Seekers",
+                        "c. Market mavens",
+                        "d. Early adopters"
+                    ],
+                    "answer": "c. Market mavens"
+                },
+                {
+                    "id": "70",
+                    "question": "70. Two-step flow is:",
+                    "options": [
+                        "a. Firm \u2192 consumer",
+                        "b. Consumer \u2192 firm",
+                        "c. Media \u2192 leaders \u2192 consumers",
+                        "d. Retail \u2192 consumer"
+                    ],
+                    "answer": "c. Media \u2192 leaders \u2192 consumers"
+                },
+                {
+                    "id": "71",
+                    "question": "71. EKB is \u201cgrand model\u201d because:",
+                    "options": [
+                        "a. Only post-purchase",
+                        "b. Integrates all factors",
+                        "c. Only impulse",
+                        "d. Low involvement"
+                    ],
+                    "answer": "b. Integrates all factors"
+                },
+                {
+                    "id": "72",
+                    "question": "72. Decision process is:",
+                    "options": [
+                        "a. External",
+                        "b. Feedback",
+                        "c. Central component",
+                        "d. Situational"
+                    ],
+                    "answer": "c. Central component"
+                },
+                {
+                    "id": "73",
+                    "question": "73. Memory recall is:",
+                    "options": [
+                        "a. External search",
+                        "b. Selective perception",
+                        "c. Internal search",
+                        "d. Filtering"
+                    ],
+                    "answer": "c. Internal search"
+                },
+                {
+                    "id": "74",
+                    "question": "74. Exposure \u2192 retention is:",
+                    "options": [
+                        "a. Evaluation",
+                        "b. Information processing",
+                        "c. Need",
+                        "d. Post purchase"
+                    ],
+                    "answer": "b. Information processing"
+                },
+                {
+                    "id": "75",
+                    "question": "75. Considered brands are:",
+                    "options": [
+                        "a. Total set",
+                        "b. Awareness set",
+                        "c. Evoked set",
+                        "d. Rejected set"
+                    ],
+                    "answer": "c. Evoked set"
+                },
+                {
+                    "id": "76",
+                    "question": "76. Motivation, personality =",
+                    "options": [
+                        "a. Environment",
+                        "b. Individual determinants",
+                        "c. Situational",
+                        "d. Feedback"
+                    ],
+                    "answer": "b. Individual determinants"
+                },
+                {
+                    "id": "77",
+                    "question": "77. Performance + price value is:",
+                    "options": [
+                        "a. Emotional",
+                        "b. Social",
+                        "c. Functional",
+                        "d. Epistemic"
+                    ],
+                    "answer": "c. Functional"
+                },
+                {
+                    "id": "78",
+                    "question": "78. Social approval buying is:",
+                    "options": [
+                        "a. Conditional",
+                        "b. Emotional",
+                        "c. Social",
+                        "d. Knowledge"
+                    ],
+                    "answer": "c. Social"
+                },
+                {
+                    "id": "79",
+                    "question": "79. Trying new restaurant is:",
+                    "options": [
+                        "a. Functional",
+                        "b. Epistemic",
+                        "c. Conditional",
+                        "d. Ego"
+                    ],
+                    "answer": "b. Epistemic"
+                },
+                {
+                    "id": "80",
+                    "question": "80. Occasion-based purchase is:",
+                    "options": [
+                        "a. Emotional",
+                        "b. Functional",
+                        "c. Conditional",
+                        "d. Social"
+                    ],
+                    "answer": "c. Conditional"
+                }
+            ];
+
+        let questions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let correctCount = 0;
+        let incorrectCount = 0;
+        let locked = false;
+        let autoNextTimeout;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function initQuiz() {
+            document.getElementById('result-screen').style.display = 'none';
+            document.getElementById('quiz-screen').style.display = 'block';
+
+            // Deep copy original questions to not mutate original dataset
+            questions = JSON.parse(JSON.stringify(originalQuestions));
+            shuffleArray(questions);
+
+            // Shuffle options in each question and clear selected states
+            questions.forEach(q => {
+                shuffleArray(q.options);
+                q.userAnswered = null;
+            });
+
+            currentIndex = 0;
+            score = 0;
+            correctCount = 0;
+            incorrectCount = 0;
+
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = questions[currentIndex];
+            locked = q.userAnswered !== null;
+
+            document.getElementById('progress').innerText = `Question ${currentIndex + 1} of ${questions.length}`;
+
+            // Clean display: optionally stripping prefixes because they look messy when shuffled
+            const cleanQuestion = q.question.replace(/^\d+\.\s+/, '');
+            document.getElementById('question-text').innerText = cleanQuestion;
+
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+
+                const cleanOpt = opt.replace(/^[a-d]\.\s+/, '');
+                btn.innerText = cleanOpt;
+
+                btn.onclick = () => selectOption(btn, opt, q.answer);
+
+                // Resume locked state correctly if navigating history
+                if (locked) {
+                    btn.disabled = true;
+                    if (opt === q.answer) {
+                        btn.classList.add('correct');
+                    } else if (opt === q.userAnswered) {
+                        btn.classList.add('wrong');
+                    }
+                }
+
+                optionsDiv.appendChild(btn);
+            });
+
+            const feedback = document.getElementById('feedback');
+            if (locked) {
+                if (q.userAnswered === q.answer) {
+                    feedback.innerText = 'Correct!';
+                    feedback.style.color = '#2ecc71';
+                } else {
+                    feedback.innerText = 'Wrong!';
+                    feedback.style.color = '#e74c3c';
+                }
+            } else {
+                feedback.innerText = '';
+            }
+
+            document.getElementById('prev-btn').disabled = (currentIndex === 0);
+
+            const nextBtn = document.getElementById('next-btn');
+            if (currentIndex === questions.length - 1) {
+                nextBtn.innerText = 'Submit';
+            } else {
+                nextBtn.innerText = 'Next';
+            }
+            // User must select an answer to move forward
+            nextBtn.disabled = !locked;
+        }
+
+        function selectOption(btn, selected, correct) {
+            if (locked) return;
+            locked = true;
+
+            const q = questions[currentIndex];
+            q.userAnswered = selected;
+
+            document.getElementById('next-btn').disabled = false;
+            btn.classList.add('selected');
+
+            const cleanCorrect = correct.replace(/^[a-d]\.\s+/, '');
+
+            const optionsDiv = document.getElementById('options');
+            Array.from(optionsDiv.children).forEach(child => {
+                child.disabled = true;
+                if (child.innerText === cleanCorrect) {
+                    child.classList.add('correct');
+                }
+            });
+
+            const feedback = document.getElementById('feedback');
+            if (selected === correct) {
+                score++;
+                correctCount++;
+                feedback.innerText = 'Correct!';
+                feedback.style.color = '#2ecc71';
+            } else {
+                btn.classList.add('wrong');
+                incorrectCount++;
+                feedback.innerText = 'Wrong!';
+                feedback.style.color = '#e74c3c';
+            }
+
+            // Automatically advance to the next question
+            autoNextTimeout = setTimeout(() => {
+                nextQuestion();
+            }, 1200);
+        }
+
+        function nextQuestion() {
+            clearTimeout(autoNextTimeout);
+            if (currentIndex < questions.length - 1) {
+                currentIndex++;
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function prevQuestion() {
+            clearTimeout(autoNextTimeout);
+            if (currentIndex > 0) {
+                currentIndex--;
+                loadQuestion();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('quiz-screen').style.display = 'none';
+            const resScreen = document.getElementById('result-screen');
+            resScreen.style.display = 'block';
+
+            document.getElementById('score-text').innerText = `You scored ${score} out of ${questions.length}`;
+            document.getElementById('details-text').innerText = `Correct: ${correctCount} | Incorrect: ${incorrectCount}`;
+
+            const finalMsg = document.getElementById('final-msg');
+            if (score >= 70) {
+                finalMsg.innerText = 'Excellent';
+                finalMsg.style.color = '#2ecc71';
+            } else if (score >= 50) {
+                finalMsg.innerText = 'Good';
+                finalMsg.style.color = '#f1c40f';
+            } else {
+                finalMsg.innerText = 'Needs Improvement';
+                finalMsg.style.color = '#e74c3c';
+            }
+        }
+
+        // Start immediately
+        initQuiz();
+    </script>
+
+</body>
+
+</html>
